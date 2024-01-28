@@ -20,6 +20,6 @@ const int szBlock = 32;
 
 Matrix operator*(const Matrix& A, const Matrix& B) {
   Matrix C(A.nbRows, B.nbCols, 0.0);
-  prodSubBlocks(0, 0, 0, std::max({A.nbRows, B.nbCols, A.nbCols}), A, B, C);
+  prodSubBlocks(0, 0, 0, 512, A, B, C);
   return C;
 }
