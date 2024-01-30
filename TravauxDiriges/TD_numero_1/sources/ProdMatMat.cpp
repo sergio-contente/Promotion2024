@@ -6,13 +6,13 @@
 #include <omp.h>
 #endif
 #include "ProdMatMat.hpp"
-
+// #ifdef _OPENMP
+//     omp_set_num_threads(8); // Remplacez 8 par le nombre souhaité de threads
+//   #endif
 namespace {
 void prodSubBlocks(int iRowBlkA, int iColBlkB, int iColBlkA, int szBlock,
                    const Matrix& A, const Matrix& B, Matrix& C) {
-  #ifdef _OPENMP
-    omp_set_num_threads(8); // Remplacez 8 par le nombre souhaité de threads
-  #endif
+  
   #pragma omp parallel for collapse(3)
   for (int j = iColBlkB; j < std::min(B.nbCols, iColBlkB + szBlock); j++)
   for (int k = iColBlkA; k < std::min(A.nbCols, iColBlkA + szBlock); k++)
