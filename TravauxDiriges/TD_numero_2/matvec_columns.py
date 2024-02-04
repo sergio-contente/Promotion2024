@@ -1,5 +1,6 @@
 from mpi4py import MPI
 import numpy as np
+import time
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -20,7 +21,7 @@ print(f"u={u}")
 # Chaque processus compute le résultat final du vecteur v
 # Diviser la matrice A em blocs de taille Nloc pour chaque processus
 local_A = A[:, rank*Nloc:(rank+1)*Nloc]
-
+begin = time.time()
 local_v = np.dot(local_A.T, u) 
 
 # Initialisation du vecteur résultat v
@@ -31,6 +32,8 @@ else:
 
 # Gather les résultats partiels sur le vecteur final
 comm.Gather(local_v, v, root=0)
-
+end = time.time()
 if rank == 0:
     print(f"v = {v}")
+    print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
+
