@@ -1,5 +1,6 @@
 from mpi4py import MPI
 import numpy as np
+import time
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -22,7 +23,7 @@ print(f"u={u}")
 local_A = A[rank*Nloc:(rank+1)*Nloc, :]
 
 local_v = np.dot(local_A, u.T) 
-
+begin = time.time()
 # Initialisation du vecteur résultat v
 if rank == 0:
     v = np.empty(dim, dtype=np.float64)
@@ -31,6 +32,8 @@ else:
 
 # Gather les résultats partiels sur le vecteur final
 comm.Gather(local_v, v, root=0)
-
+end = time.time()
 if rank == 0:
     print(f"v = {v}")
+    print(f"Temps pour calculer le produit (lignes): {end - begin} secondes")
+
