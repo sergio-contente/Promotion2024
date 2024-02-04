@@ -1,45 +1,33 @@
-# from mpi4py import MPI
-
-# comm = MPI.COMM_WORLD
-# rank = comm.Get_rank()
-# size = comm.Get_size()
-
-# Produit matrice-vecteur v = A.u
+from mpi4py import MPI
 import numpy as np
 
-# Dimension du problème (peut-être changé)
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+# Ensure dimension is divisible by the number of processes
 dim = 120
-# Initialisation de la matrice
-A = np.array([[(i+j) % dim+1. for i in range(dim)] for j in range(dim)])
-#print(f"A = {A}")
+if dim % size != 0:
+    raise ValueError("Matrix size not divisible by number of processes")
 
-#Getting the block
-szBlock = 30
-ColumnBlocks = []
-for block_start in range(0, dim, szBlock):
-    block_end = block_start + szBlock
-    ColumnBlock = A[:, block_start:block_end]
-    ColumnBlocks.append(ColumnBlock)
-    
-# Printing the matrix-vector block by block
-for i in range(dim):
-    print(f"ROW {i}")
-    for j in range(len(ColumnBlocks)):
-        print(f"COLUMN BLOCK {j}")
-        # Print each element in the current row for the current column block
-        for k in range(szBlock):
-            if i < len(ColumnBlocks[j]):
-                print(ColumnBlocks[j][i][k])
-        print("---------------------")
+# Calculate the number of columns each process will handle
+Nloc = dim // size
 
-
-
-# Initialisation du vecteur u
+# Initialize the matrix A and vector u on all processes
+A = np.array([[(i+j) % dim + 1. for i in range(dim)] for j in range(dim)])
 u = np.array([i+1. for i in range(dim)])
-#print(f"u = {u}")
 
+# Each process computes a part of the result vector v
+# Slice the matrix A to get the local columns for each process
+local_A = A[:, rank*Nloc:(rank+1)*Nloc]
+local_u = u[rank*Nloc:(rank+1)*Nloc]
 
+# Perform the dot product of the local column block with the entire vector u
+local_v = np.dot(local_A, local_u)
 
-# Produit matrice-vecteur
-v = A.dot(u)
-#print(f"v = {v}")
+# Prepare a buffer for the complete result vector on the root process
+if rank == 0:
+    v = np.empty(dim, dtype=np.float64)
+elif rank==size-1:
+    v = np.sum(local_v)
+    print(f"v: {v}")
