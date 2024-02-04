@@ -1,33 +1,16 @@
-from mpi4py import MPI
+# Produit matrice-vecteur v = A.u
 import numpy as np
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
-# Ensure dimension is divisible by the number of processes
+# Dimension du problème (peut-être changé)
 dim = 120
-if dim % size != 0:
-    raise ValueError("Matrix size not divisible by number of processes")
+# Initialisation de la matrice
+A = np.array([[(i+j) % dim+1. for i in range(dim)] for j in range(dim)])
+print(f"A = {A}")
 
-# Calculate the number of columns each process will handle
-Nloc = dim // size
-
-# Initialize the matrix A and vector u on all processes
-A = np.array([[(i+j) % dim + 1. for i in range(dim)] for j in range(dim)])
+# Initialisation du vecteur u
 u = np.array([i+1. for i in range(dim)])
+print(f"u = {u}")
 
-# Each process computes a part of the result vector v
-# Slice the matrix A to get the local columns for each process
-local_A = A[:, rank*Nloc:(rank+1)*Nloc]
-local_u = u[rank*Nloc:(rank+1)*Nloc]
-
-# Perform the dot product of the local column block with the entire vector u
-local_v = np.dot(local_A, local_u)
-
-# Prepare a buffer for the complete result vector on the root process
-if rank == 0:
-    v = np.empty(dim, dtype=np.float64)
-elif rank==size-1:
-    v = np.sum(local_v)
-    print(f"v: {v}")
+# Produit matrice-vecteur
+v = A.dot(u)
+print(f"v = {v}")
