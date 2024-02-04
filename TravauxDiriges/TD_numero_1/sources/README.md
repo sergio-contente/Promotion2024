@@ -47,7 +47,7 @@ k,j,i             | 0.844189 | 2543.84 | 2449.21
 
 *Discussion des résultats*
 
-- L'ordre optimal des boucles pour le calcul du produit matrice-matrice, dans ce cas, est j, k, i. Bien que la complexité algorithmique demeure inchangée, cet ordre optimise significativement l'accès à la mémoire. La taille des données d'entrée, qui peut limiter la performance, influe sur la complexité d'accès à la mémoire. Avec l'utilisation de plusieurs cœurs de processeur, la quantité de cache disponible varie, affectant ainsi le temps d'exécution du programme.
+- L'ordre optimal des boucles pour le calcul du produit matrice-matrice, dans ce cas, est j, k, i (avec 1024 MFlops). Bien que la complexité algorithmique demeure inchangée, cet ordre optimise significativement l'accès à la mémoire. La taille des données d'entrée, qui peut limiter la performance, influe sur la complexité d'accès à la mémoire. Avec l'utilisation de plusieurs cœurs de processeur, la quantité de cache disponible varie, affectant ainsi le temps d'exécution du programme.
 
 - Un aspect crucial de cette optimisation est la manière dont la matrice est stockée en mémoire. Puisque la matrice est stockée colonne par colonne, accéder aux éléments dans l'ordre j, k, i permet un accès séquentiel et contigu en mémoire. Cela signifie que les données sont lues de manière continue, ce qui est nettement plus rapide par rapport à un accès non séquentiel. L'accès continu en mémoire améliore l'utilisation de la ligne de cache, permettant aux données d'être plus proches du processeur et réduisant ainsi la dépendance envers la mémoire RAM, qui est plus lente. Ce rapprochement des données du processeur réduit le temps d'accès et, par conséquent, accélère l'exécution globale du programme.
 
@@ -57,14 +57,19 @@ k,j,i             | 0.844189 | 2543.84 | 2449.21
 
   OMP_NUM         | MFlops  | MFlops(n=2048) | MFlops(n=512)  | MFlops(n=4096)
 ------------------|---------|----------------|----------------|---------------
-1                 | 1631.43 | 4063.30 | 3889.37 | 3949.24
-2                 | 3364.32 | 3966.63 | 5228.31 | 3895.33
-3                 | 4960.84 | 4047.64 | 3915.90 | 3852.09
-4                 | 6264.84 | 3974.40 | 4021.47 | 3768.29
-5                 | 7529.97| 4072.05 | 5075.47 | 3869.85
-6                 | 8303.64 | 4076.90 | 5120.05 | 3743.28
-7                 | 8533.25 | 4034.98 | 4344.34 | 3757.77
-8                 | 10158.70 | 4029.92 | 4006.51 | 3594.60
+1                 | 3527.48 | 3511.72 | 3620.33 | 3542.87
+2                 | 6422.96 | 6931.43 | 4760.09 | 6925.14
+3                 | 9177.06 | 10377.4 | 5728.34 | 10307.9
+4                 | 11882.8 | 13091.4 | 6115.88 | 13739.9
+5                 | 13665.8 | 16391.0 | 7098.22 | 15926.4
+6                 | 15748.3 | 18085.6 | 10091.0 | 17073.1
+7                 | 18219.7 | 20177.7 | 6090.04 | 19385.8
+8                 | 15664.5 | 16224.9 | 9646.20 | 15925.7
+
+__OBSERVATION__
+- Chaque fois que j'ai essayé d'utiliser la directive "#pragma omp parallel for collapse (3)", j'ai reçu l'erreur: 
+   - Erreur numérique : valeur attendue pour *MATRIX* -> *VALEUR ESPÉRÉE*  mais valeur trouvée : *VALEUR TROUVÉE*
+ - Pour cette raison, j'ai utilisé la directive: "#pragma omp parallel for collapse (2)" qui parallelise seulement le 2 boucles plus intérieures.
 
 ### Produit par blocs
 
@@ -72,13 +77,13 @@ k,j,i             | 0.844189 | 2543.84 | 2449.21
 
   szBlock         | MFlops  | MFlops(n=2048) | MFlops(n=512)  | MFlops(n=4096)
 ------------------|---------|----------------|----------------|---------------
-origine (=max)    | 3985.84 | 3936.47 | 3732.61 | 3730.31
-32                |  |
-64                |  |
-128               |  |
-256               |  |
-512               |  |
-1024              |  |
+origine (=max)    | 20496.80 | 15346.30 | 10249.5 | 10750.30
+32                | 5337.27 | 5807.84 | 4027.19 | 6035.72
+64                | 8923.07 | 14189.60 | 5848.28 | 14224.80
+128               | 15290.90 | 11878.70 | 4894.64 | 12780.50
+256               | 16136.20 | 20702.60 | 8027.80 | 17770.40
+512               | 19300.80 | 20114.40 | 10181.40 | 20754.80
+1024              | 20254.70 | 17763.00 | 10521.80 | 17385.60
 
 ### Bloc + OMP
 
