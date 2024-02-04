@@ -23,6 +23,7 @@ print(f"u={u}")
 local_A = A[:, rank*Nloc:(rank+1)*Nloc]
 begin = time.time()
 local_v = np.dot(local_A.T, u) 
+end = time.time()
 
 # Initialisation du vecteur résultat v
 if rank == 0:
@@ -32,7 +33,6 @@ else:
 
 # Gather les résultats partiels sur le vecteur final
 comm.Gather(local_v, v, root=0)
-end = time.time()
 if rank == 0:
     print(f"v = {v}")
     print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
