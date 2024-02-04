@@ -5,7 +5,11 @@ from PIL import Image
 from math import log
 from time import time
 import matplotlib.cm
+from mpi4py import MPI
 
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 @dataclass
 class MandelbrotSet:
@@ -53,19 +57,29 @@ width, height = 1024, 1024
 
 scaleX = 3./width
 scaleY = 2.25/height
-convergence = np.empty((width, height), dtype=np.double)
+
+Nloc = height // size
+start_y = rank * Nloc
+end_y = (rank + 1) * Nloc if rank != size - 1 else height
+local_convergence = np.empty((end_y - start_y, width), dtype=np.double)
+
+
 # Calcul de l'ensemble de mandelbrot :
 deb = time()
-for y in range(height):
+for y in range(start_y, end_y):
     for x in range(width):
-        c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
-        convergence[x, y] = mandelbrot_set.convergence(c, smooth=True)
-fin = time()
-print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
+        c = complex(-2.0 + scaleX * x, -1.125 + scaleY * y)
+        local_convergence[y - start_y, x] = mandelbrot_set.convergence(c, smooth=True)
 
-# Constitution de l'image résultante :
-deb = time()
-image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence.T)*255))
+convergence = None
+if rank == 0:
+    convergence = np.empty((width, height), dtype=np.double)
+comm.Gather(local_convergence, convergence, root=0)
 fin = time()
-print(f"Temps de constitution de l'image : {fin-deb}")
-image.show()
+if rank == 0:
+    print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
+    deb = time()
+    image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence) * 255))
+    fin = time()
+    print(f"Temps de constitution de l'image : {fin-deb}")
+    image.show()
