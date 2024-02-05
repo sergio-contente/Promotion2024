@@ -59,58 +59,58 @@ width, height = 1024, 1024
 scaleX = 3./width
 scaleY = 2.25/height
 
-convergence = np.empty((width, height), dtype=np.double)
-Nloc = height // nbp
-start_y = rank * Nloc
-end_y = (rank + 1) * Nloc if rank != nbp - 1 else height
-local_convergence = np.empty((end_y - start_y, width), dtype=np.double)
-
-# Calcul de l'ensemble de mandelbrot :
-deb = time()
 # Algorithme maître-escalve :
-if rank==0: # Algorithme maître distribuant les tâches
+if rank == 0: # Maître
+    convergence_matrix = np.empty((height, width), dtype=np.float64)
+    num_of_rows_sent = 0
 
-    iPack : int = 0
-    for iProc in range(1,nbp):
-        comm.send(iPack, iProc)
-        iPack += 1
-    stat : MPI.Status = MPI.Status()
-    while iPack < nbPacks:
-        done = comm.recv(status=stat)# On reçoit du premier process à envoyer un message
-        slaveRk = stat.source
-        comm.send(iPack, dest=slaveRk)
-        iPack += 1
-    iPack = -1 # iPack vaut maintenant -1 pour signaler aux autres procs qu'il n'y a plus de tâches à exécuter
-    for iProc in range(1,nbp):
-        status = MPI.Status()
-        done = comm.recv(status=status)# On reçoit du premier process à envoyer un message
-        slaveRk : int = status.source
-        comm.send(iPack, dest=slaveRk)
-    comm.Reduce([image_loc,MPI.INT64_T], [image,MPI.INT64_T], op=MPI.SUM, root=0)
+    # Envoyer une ligne de travail à chaque éclave
+    for i in range(1, min(nbp, height)):
+        comm.send(num_of_rows_sent, dest=i)
+        num_of_rows_sent += 1
+
+    # Recevoir les résultats et les envoyer à les nouvelles lignes
+    while num_of_rows_sent < height-1:
+        Status = MPI.Status()
+        y, converge_loc_row = comm.recv(source=MPI.ANY_SOURCE, status=Status)
+        
+        for x in range(width):
+            convergence_matrix[x, y] = converge_loc_row[x]
+        
+        comm.send(num_of_rows_sent, dest=Status.Get_source())
+        num_of_rows_sent+=1
+        source_rank = Status.Get_source()
+    
+    # Après recevoir les résultats de chaque tâche
+    for i in range(1, nbp):
+        comm.send(None, dest=i)  #
+
+    # Dernières lignes qu'il faut processer
+    for i in range(1, min(nbp, height)):
+        Status = MPI.Status()
+        y, converge_loc_row = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
+        for x in range(width):
+            convergence_matrix[x, y] = converge_loc_row[x]
+
+        
+    # Sauvegarder l'image
+    image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence_matrix) * 255))
+    image.save("mandelbrot.png")
+    print("Imagem salva como 'mandelbrot.png'.")
 else:
-    status : MPI.Status = MPI.Status()
-    iPack : int
-    res   : int = 1
+    deb = time()
+    # Éclaves
+    while True:
+        y = comm.recv(source=0)
+        if y is None:  # Signal d'arrêt
+            break
 
-    iPack = comm.recv(source=0) # On reçoit un n° de tâche à effectuer
-    while iPack != -1:          # Tant qu'il y a une tâche à faire
-        image_loc = bhuddabort_task(packSize, maxIter, width, height )
-        req : MPI.Request = comm.isend(res,0)
-        image += image_loc
-        iPack = comm.recv(source=0) # On reçoit un n° de tâche à effectuer
-        req.wait()
-    comm.Reduce([image,MPI.INT64_T], None, op=MPI.SUM, root=0)
+        converge_loc_row = np.empty(width, dtype=np.double)
+        for x in range(width):
+            c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
+            converge_loc_row[x] = np.array(mandelbrot_set.convergence(complex(-2.0 + scaleX * x, -1.125 + scaleY * y)))
+            
+        comm.send((y, converge_loc_row), dest=0)
+    fin=time()
+    print("Temps du calcul de l'ensemble de Mandelbrot : ",fin-deb," pour le rank ",rank)
 
-for y in range(height):
-    for x in range(width):
-        c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
-        convergence[x, y] = mandelbrot_set.convergence(c, smooth=True)
-fin = time()
-print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
-
-# Constitution de l'image résultante :
-deb = time()
-image = Image.fromarray(np.uint8(matplotlib.cm.plasma(convergence.T)*255))
-fin = time()
-print(f"Temps de constitution de l'image : {fin-deb}")
-image.show()
