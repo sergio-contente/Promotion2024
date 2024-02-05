@@ -28,6 +28,7 @@ begin = time.time()
 for i in range(dim):
     for j in range(block_start, block_end):
         v[i] += A[i][j] * u[j]
+end = time.time()
 
 for i in range(size):
     if i != rank:
@@ -37,7 +38,6 @@ for i in range(size - 1):
     Status = MPI.Status()
     V_received = comm.recv(source=MPI.ANY_SOURCE, status=Status)
     v += V_received
-end = time.time()
 print(f"Processus {rank} received the vector v = {v}")
 if rank == 0:
     print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")

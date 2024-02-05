@@ -86,31 +86,3 @@ Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 8 tâches: 
   
 En utilisant 8 processus différents, on peut obtenir 5.02 d'accélération. L'algorithme de maître-esclave est moin efficace que laquel par ligne.
 
-## 1.4.1
-
-Temps pour calculer le produit (sans parallèlisation): 4.5 e-05 secondes
-
-Temps pour calculer le produit avec la parallèlisation par colonnes : 
-2.8 e-05 secondes
-
-Speedup:
-$$
-S = \frac{ts}{tp} = \frac{4.5}{2.8} = 1.6
-$$
-
-C'est-à-dire que l'on a obtenu una optimisation sublineaire et on peut supposer que cela soit à cause de que la charge de travail n'est pas parfaitement équilibrée entre les tâches.
-
-## 1.4.2
-
-Temps pour calculer le produit (sans parallèlisation): 4.5 e-05 secondes
-
-Temps pour calculer le produit (lignes): 3.17e-05 secondes
-
-Speedup:
-$$
-S = \frac{ts}{tp} = \frac{4.5}{3.17} = 1.2
-$$
-
-C'est-à-dire que l'on a obtenu una optimisation sublineaire et on peut supposer que cela soit à cause de que la charge de travail n'est pas parfaitement équilibrée entre les tâches.
-
-**Du coup, l'optimisation par colonnes est meilleure que laquelle par lignes.**

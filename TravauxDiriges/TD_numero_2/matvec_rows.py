@@ -39,6 +39,5 @@ for i in range(size - 1):
     v += V_received
 end = time.time()
 print(f"Processus {rank} received the vector v = {v}")
-if rank == 0:
-    print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
+print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
 
