@@ -71,6 +71,9 @@ __OBSERVATION__
    - Erreur numérique : valeur attendue pour *MATRIX* -> *VALEUR ESPÉRÉE*  mais valeur trouvée : *VALEUR TROUVÉE*
  - Pour cette raison, j'ai utilisé la directive: "#pragma omp parallel for collapse (2)" qui parallelise seulement le 2 boucles plus intérieures.
 
+## 1.4
+ Il existe toujours un potentiel d'amélioration en optimisant la gestion des threads, l'accès à la mémoire, et en minimisant les dépendances de données.
+
 ### Produit par blocs
 
 `make TestProduct.exe && ./TestProduct.exe 1024`
@@ -85,17 +88,37 @@ origine (=max)    | 20496.80 | 15346.30 | 10249.5 | 10750.30
 512               | 19300.80 | 20114.40 | 10181.40 | 20754.80
 1024              | 20254.70 | 17763.00 | 10521.80 | 17385.60
 
+## 2.6
+Temps pris par le produit matrice-matrice séquentiel : 8.38 secondes
+Temps CPU produit matrice-matrice avec blocage : 0.10274 secondes
+
+On a reussi un speedup de 81.6. Alors, on a augmenté beaucoup notre vitesse.
+
+
 ### Bloc + OMP
 
   szBlock      | OMP_NUM | MFlops  | MFlops(n=2048) | MFlops(n=512)  | MFlops(n=4096)|
 ---------------|---------|---------|-------------------------------------------------|
-A.nbCols       |  1      |         |                |                |               |
-512            |  8      |         |                |                |               |
+A.nbCols       |  1      | 3506.62 | 3631.98        | 3456.54         | 3546.74      |
+512            |  8      |  10713.2| 11130.5        | 3552.2          | 7149.81      |
 ---------------|---------|---------|-------------------------------------------------|
-Speed-up       |         |         |                |                |               |
+Speed-up       |         |   1.02  |2.75            |   1.01          |      2.02      |
 ---------------|---------|---------|-------------------------------------------------|
 
 ### Comparaison with BLAS
+
+Temps CPU produit matrice-matrice blas : 0.633373 secondes
+MFlops Blas -> 3390.55
+
+Temps CPU produit matrice-matrice parallélisée : 0.56011 secondes
+MFlops Paral-> 3834.04
+
+Speedup:
+$$
+S = \frac{0.63}{0.56} = 1.13
+$$
+
+Donc, la meilleure verson est laquelle avec la parallélisation du produit matrice–matrice par bloc.
 
 # Tips
 
