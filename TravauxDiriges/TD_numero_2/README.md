@@ -17,12 +17,13 @@ Au sein de la programmation parallèle, on peut suposer qu'il soit un scénario 
 En utilisant la Loi d'Amdhal pour le cas d'Alice et en tennant compte infinis processeurs:
 
 $$
-p = 0.9
-\quad
-n \gg 1
-\\
-S_{\infin} = \frac{1}{1-p} = \frac{1}{0.1} = 10
+ p = 0.9
+ \quad
+ n \gg 1
+ \\
+ S_{\infin} = \frac{1}{1-p} = \frac{1}{0.1} = 10
 $$
+
 Donc, l'acceélération théorique maximale d'Alice sera 10.
 
 ## 1.2.b
@@ -41,18 +42,21 @@ Donc, il faut utiliser **14** noeuds.
 
 Voici la Lois de Gustafson:
 $$
-S = n + (1 - n)f \quad f = 1 - p
+ S = n + (1 - n)f \quad f = 1 - p
 $$
 
 L'énoncé du problème nous dit que Alice a obtenu una accélération maximale de 4. Alors, on peut calculer le nombre de noeuds qu'elle prend:
 
-$$4 = n + (1-n)0.1 \\
-n = 4.33 \approx 5$$
+$$
+ 4 = n + (1-n)0.1 \\
+ n = 4.33 \approx 5
+$$
 
 Finalement, on suppose que, en doublant le nombre de donnés, la partie qui sera parallèlisé sera presque 100% et le temps sera le double aussi. Donc, l'accélération maximale avec la même quantité de noeuds sera:
 
-$$S' = 5 + (1-5)0.1\times 2 \\
-S' = 4.2
+$$
+ S' = 5 + (1-5)0.1\times 2 \\
+ S' = 4.2
 $$
 
 Accélération finale: **4.2**.
