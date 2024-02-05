@@ -23,11 +23,13 @@ void prodSubBlocks(int iRowBlkA, int iColBlkB, int iColBlkA, int szBlock,
   for (int i = iRowBlkA; i < iEnd; ++i)
         C(i, j) += A(i, k) * B(k, j);
 }
-const int szBlock = 1024;
+//const int szBlock = 128;
 }  // namespace
 
 Matrix operator*(const Matrix& A, const Matrix& B) {
   Matrix C(A.nbRows, B.nbCols, 0.0);
+  const int szBlock = std::max({A.nbRows, B.nbCols, A.nbCols});
+  #pragma omp parallel for collapse (2)
   //prodSubBlocks(0, 0, 0, std::max({A.nbRows, B.nbCols, A.nbCols}), A, B, C);
    for (int iRowBlkA = 0; iRowBlkA < A.nbRows; iRowBlkA += szBlock) {
     for (int iColBlkB = 0; iColBlkB < B.nbCols; iColBlkB += szBlock) {
