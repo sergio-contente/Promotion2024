@@ -5,6 +5,11 @@ from PIL import Image
 from math import log
 from time import time
 import matplotlib.cm
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+nbp = comm.Get_size()
 
 
 @dataclass
@@ -53,9 +58,49 @@ width, height = 1024, 1024
 
 scaleX = 3./width
 scaleY = 2.25/height
+
 convergence = np.empty((width, height), dtype=np.double)
+Nloc = height // nbp
+start_y = rank * Nloc
+end_y = (rank + 1) * Nloc if rank != nbp - 1 else height
+local_convergence = np.empty((end_y - start_y, width), dtype=np.double)
+
 # Calcul de l'ensemble de mandelbrot :
 deb = time()
+# Algorithme maître-escalve :
+if rank==0: # Algorithme maître distribuant les tâches
+
+    iPack : int = 0
+    for iProc in range(1,nbp):
+        comm.send(iPack, iProc)
+        iPack += 1
+    stat : MPI.Status = MPI.Status()
+    while iPack < nbPacks:
+        done = comm.recv(status=stat)# On reçoit du premier process à envoyer un message
+        slaveRk = stat.source
+        comm.send(iPack, dest=slaveRk)
+        iPack += 1
+    iPack = -1 # iPack vaut maintenant -1 pour signaler aux autres procs qu'il n'y a plus de tâches à exécuter
+    for iProc in range(1,nbp):
+        status = MPI.Status()
+        done = comm.recv(status=status)# On reçoit du premier process à envoyer un message
+        slaveRk : int = status.source
+        comm.send(iPack, dest=slaveRk)
+    comm.Reduce([image_loc,MPI.INT64_T], [image,MPI.INT64_T], op=MPI.SUM, root=0)
+else:
+    status : MPI.Status = MPI.Status()
+    iPack : int
+    res   : int = 1
+
+    iPack = comm.recv(source=0) # On reçoit un n° de tâche à effectuer
+    while iPack != -1:          # Tant qu'il y a une tâche à faire
+        image_loc = bhuddabort_task(packSize, maxIter, width, height )
+        req : MPI.Request = comm.isend(res,0)
+        image += image_loc
+        iPack = comm.recv(source=0) # On reçoit un n° de tâche à effectuer
+        req.wait()
+    comm.Reduce([image,MPI.INT64_T], None, op=MPI.SUM, root=0)
+
 for y in range(height):
     for x in range(width):
         c = complex(-2. + scaleX*x, -1.125 + scaleY * y)
