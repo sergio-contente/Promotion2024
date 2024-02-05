@@ -23,21 +23,20 @@ print(f"u={u}")
 
 # Chaque processus compute le résultat final du vecteur v
 # Diviser la matrice A em blocs de taille Nloc pour chaque processus
+v_local = np.zeros(dim)
+
+A = comm.bcast(A, root=0)
+u = comm.bcast(u, root=0)
 
 begin = time.time()
 for i in range(block_start, block_end):
     for j in range(dim):
-        v[i] += A[i][j] * u[j]
-
-for i in range(size):
-    if i != rank:
-        comm.send(v, dest=i)
-
-for i in range(size - 1):
-    Status = MPI.Status()
-    V_received = comm.recv(source=MPI.ANY_SOURCE, status=Status)
-    v += V_received
+        v_local[i] += A[i][j] * u[j]
 end = time.time()
+
+comm.Allreduce(v_local, v, op=MPI.SUM)
+
 print(f"Processus {rank} received the vector v = {v}")
-print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
+if rank == 0:
+    print(f"Temps pour calculer le produit (colomnes) : {end - begin} secondes")
 
