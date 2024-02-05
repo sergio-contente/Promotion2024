@@ -27,6 +27,7 @@ $$
 $$
 Donc, il faut utiliser **14** noeuds.
 ## 1.2.c
+
 Voici la Lois de Gustafson:
 $$
 S = n + (1 - n)f \quad f = 1 - p
@@ -37,28 +38,53 @@ L'énoncé du problème nous dit que Alice a obtenu una accélération maximale 
 $$4 = n + (1-n)0.1 \\
 n = 4.33 \approx 5$$
 
-Finalement, on suppose que, en doublant le nombre de donnés, la partie qui sera parallèlisé sera presque 100%. Donc, l'accélération maximale avec la même quantité de noeuds sera:
+Finalement, on suppose que, en doublant le nombre de donnés, la partie qui sera parallèlisé sera presque 100% et le temps sera le double aussi. Donc, l'accélération maximale avec la même quantité de noeuds sera:
 
-$$S' = 4 + (1-4)*0.01 \\
-S' = 4.96 \approx 5
+$$S' = 5 + (1-5)0.1\times 2 \\
+S' = 4.2
 $$
 
-Accélération finale: **5**.
+Accélération finale: **4.2**.
 
 ## 1.3.1
 
-Temps du calcul de l'ensemble de Mandelbrot sans parallèlisation : 2.46 secondes
+### Par ligne
+  
+Temps du calcul de l'ensemble de Mandelbrot sans parallèlisation (1 tâche): 2.46 secondes
 
-Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation : 0.65 secondes
+- SpeedUp: 1
 
-Speedup:
-$$
-S = \frac{ts}{tp} = \frac{2.46}{0.65} = 3.78
-$$
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 2 tâches : 1.097 secondes
 
-En utilisant 4 processus différents, on peut obtenir 3.78 d'accélération. Les deux nombres sont proches, c'est-à-dire que la parallèlisation a été efficient et san surcharge de communication entre taches.
+- SpeedUp: 2.24
 
-## 1.3.2
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 4 tâches: 0.60 secondes
+
+- SpeedUp: 4.1
+
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 8 tâches: 0.38 secondes
+
+- SpeedUp: 6.47
+
+En utilisant 8 processus différents, on peut obtenir 6.47 d'accélération. On espère que ce nombre augment avec plus processus.
+
+## 1.3.2 
+
+### Maître-Esclave
+
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 2 tâches : 2.75 secondes
+
+- SpeedUp: 0.89
+
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 4 tâches: 0.916 secondes
+
+- SpeedUp: 2.68
+
+Temps du calcul de l'ensemble de Mandelbrot avec parallèlisation de 8 tâches: 0.49 secondes
+
+- SpeedUp: 5.02
+  
+En utilisant 8 processus différents, on peut obtenir 5.02 d'accélération. L'algorithme de maître-esclave est moin efficace que laquel par ligne.
 
 ## 1.4.1
 
