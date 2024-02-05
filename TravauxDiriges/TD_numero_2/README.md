@@ -21,7 +21,7 @@ $$
  \quad
  n \gg 1
  \\
- S_{\infin} = \frac{1}{1-p} = \frac{1}{0.1} = 10
+ S = \frac{1}{1-p} = \frac{1}{0.1} = 10
 $$
 
 Donc, l'acceélération théorique maximale d'Alice sera 10.
