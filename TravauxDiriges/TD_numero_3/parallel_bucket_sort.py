@@ -1,35 +1,41 @@
-from mpi4py import MPI
 import numpy as np
+from PIL import Image
+import random
+from time import time
+from mpi4py import MPI
 
-comm = MPI.COMM_WORLD()
+#n_buckets = 10
+elements = np.array([0.13, 0.25, 0.15, 0.43, 0.23, 0.49, 0.9, 0.85, 0.75, 0.71, 0.77, 0.65])
+
+comm = MPI.COMM_WORLD
+npb = comm.Get_size()
 rank = comm.Get_rank()
-nbp = comm.Get_size()
 
-n_buckets = 10
-elements = [0.13, 0.25, 0.15, 0.43, 0.23, 0.49, 0.9, 0.85, 0.75, 0.71]
-results = []
+# Size of the bucket
+NLoc = len(elements) // npb
+chunck = npb + 1
 
+# Each process represents a bucket
+local_elements = np.zeros(NLoc)
+# Divide the elements into process
+comm.Scatter(elements, local_elements, root=0)
+#Sort the local data
+local_elements.sort()
+
+# Take nbp + 1 values at regular intervals
+
+
+
+
+# Gather the sorted local elements back to the root process
+sorted_elements = None
+if rank == 0:
+    sorted_elements = np.zeros(NLoc * npb)
+
+comm.Gather(local_elements, sorted_elements, root=0)
+
+#print only one time
 if rank==0:
-    flat_array = np.empty(len(elements), dtype=np.float64)
-    num_of_rows_sent = 0
-
-elements_index = [int((i*n_buckets)) for i in elements]
-print(elements_index)
-dictionary = {}
-for index, element in zip(elements_index, elements):
-    if index not in dictionary:
-        dictionary[index] = [element]
-    else:
-        dictionary[index].append(element)
-print(dictionary)
+    print(sorted_elements)
 
 
-# Compiling sorted lists into the results list
-results = [dictionary[key] for key in dictionary]
-
-#Flatten the array
-flat_list = []
-for row in results:
-    flat_list.extend(row)
-
-print(flat_list)
