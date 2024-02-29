@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from time import time
 from mpi4py import MPI
 
@@ -21,6 +20,7 @@ else:
 if rank == 0:
     elements = np.ascontiguousarray(elements)
 
+start_time = time()
 # Each process represents a bucket
 local_elements = np.zeros(NLoc)
 # Divide the elements into process
@@ -78,8 +78,25 @@ for process in range(nbp):
     gathered = comm.gather(local_bucket_contiguous, root=process)
     if process == rank:
         local_values_buckets = gathered
+
+gathered_buckets = comm.gather(local_values_buckets, root=0)
+
 if rank == 0:
-    sorted_loc_values = np.concatenate(local_values_buckets)
-    sorted_loc_values.sort()
-    print("Ordered vector:", sorted_loc_values)
+    # Checks if "gathered_buckets" is a np array list
+    processed_buckets = []
+    for bucket_group in gathered_buckets:
+        if isinstance(bucket_group, list):
+            # Converts chaque group of buckets (if is a list) into a np array
+            processed_bucket_group = [np.array(bucket) for bucket in bucket_group]
+            # Concatenates the array
+            processed_buckets.append(np.concatenate(processed_bucket_group))
+        else:
+            # If is not a list, is a np array
+            processed_buckets.append(bucket_group)
+
+    all_buckets = np.concatenate(processed_buckets)
+    all_buckets.sort()
+    end_time = time()
+    print("Ordered vector:", all_buckets)
+    print(f"Execution time: {end_time - start_time} seconds.")
 
