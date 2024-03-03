@@ -23,6 +23,7 @@ On itère ensuite pour étudier la façon dont évolue la population des cellule
 """
 import pygame  as pg
 import numpy   as np
+from mpi4py import MPI
 
 
 class Grille:
@@ -165,8 +166,22 @@ if __name__ == '__main__':
     except KeyError:
         print("No such pattern. Available ones are:", dico_patterns.keys())
         exit(1)
-    grid = Grille(*init_pattern)
-    appli = App((resx, resy), grid)
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    #Define the core using the rank of a process
+    color = 0 if rank == 0 else 1
+
+    #Create new communicators
+    comm_calcules = comm.Split(color, rank)
+    rank_calcules = comm_calcules.Get_rank()
+    size_calcules = comm_calcules.Get_size()
+
+    if color == 0:
+        grid = Grille(*init_pattern)
+        appli = App((resx, resy), grid)
+
 
     while True:
         #time.sleep(0.5) # A régler ou commenter pour vitesse maxi
