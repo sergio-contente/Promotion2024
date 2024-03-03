@@ -181,15 +181,28 @@ if __name__ == '__main__':
     if color == 0:
         grid = Grille(*init_pattern)
         appli = App((resx, resy), grid)
+        appli.draw()
+    else:
+        nx = init_pattern[0][0]
+        ny = init_pattern[0][1]
+        Nloc = ny // size_calcules
 
+        min_value = np.floor(rank_calcules * Nloc)
+        max_value = np.floor((rank_calcules + 1) * Nloc)
+        grid = Grille(*init_pattern, (min_value, max_value))
 
     while True:
         #time.sleep(0.5) # A régler ou commenter pour vitesse maxi
-        t1 = time.time()
-        diff = grid.compute_next_iteration()
-        t2 = time.time()
-        appli.draw()
-        t3 = time.time()
+        if color == 1:
+            t1 = time.time()
+            diff = grid.compute_next_iteration()
+            t2 = time.time()
+
+        if color == 0:
+            appli.draw()
+            t3 = time.time()
+
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
