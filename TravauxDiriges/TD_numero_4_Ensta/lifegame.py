@@ -86,21 +86,13 @@ class Grille:
         self.cells = next_cells
         return diff_cells
     
-    def local_pos_to_global_idx(self, i, j):
-        return (i * self.global_dimensions[1] + j + self.offset[0] - 1) % (self.global_dimensions[0]
-                                                                           * self.global_dimensions[1])
-
-    def global_idx_to_local_pos(self, idx):
-        return idx // self.global_dimensions[1], (idx % self.global_dimensions[1] - self.offset[0] + 1)\
-                                                 % self.global_dimensions[1]
-    
     def update_grid_from_diff(self, diff):
         ny = self.dimensions[0]
         nx = self.dimensions[1]
 
         for index in diff:
-            i, j = self.global_idx_to_local_pos(index)
-
+            i = index // nx
+            j = index % nx
             if 0 <= i < ny and 0 <= j < nx:
                 self.cells[i, j] = 0 if self.cells[i, j] == 1 else 1
 
@@ -224,15 +216,16 @@ if __name__ == '__main__':
             t1 = time.time()
             diff = grid.compute_next_iteration()
             t2 = time.time()
-
-            diff_total = comm_calcules.Allgather(diff)
+            sendbuf = np.array(diff, dtype='i') 
+            recvbuf = np.empty(size_calcules * len(sendbuf), dtype='i')
+            comm_calcules.Allgather(sendbuf, recvbuf)
             # diff_final = []
             # for x in diff:
             #     for y in diff:
             #         if y not in diff_total and y not in diff_final:
             #             diff_final.append(y)
             # diff = diff_final
-            diff = diff_total
+            diff = recvbuf
 
         if color == 0:
             t3 = time.time()
