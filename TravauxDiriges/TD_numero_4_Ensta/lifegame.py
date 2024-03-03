@@ -85,6 +85,24 @@ class Grille:
                     next_cells[i,j] = 0         # Morte, elle reste morte.
         self.cells = next_cells
         return diff_cells
+    
+    def local_pos_to_global_idx(self, i, j):
+        return (i * self.global_dimensions[1] + j + self.offset[0] - 1) % (self.global_dimensions[0]
+                                                                           * self.global_dimensions[1])
+
+    def global_idx_to_local_pos(self, idx):
+        return idx // self.global_dimensions[1], (idx % self.global_dimensions[1] - self.offset[0] + 1)\
+                                                 % self.global_dimensions[1]
+    
+    def update_grid_from_diff(self, diff):
+        ny = self.dimensions[0]
+        nx = self.dimensions[1]
+
+        for index in diff:
+            i, j = self.global_idx_to_local_pos(index)
+
+            if 0 <= i < ny and 0 <= j < nx:
+                self.cells[i, j] = 0 if self.cells[i, j] == 1 else 1
 
 
 class App:
@@ -128,6 +146,14 @@ class App:
             [pg.draw.line(self.screen, self.draw_color, (0,i*self.size_y), (self.width,i*self.size_y)) for i in range(self.grid.dimensions[0])]
             [pg.draw.line(self.screen, self.draw_color, (j*self.size_x,0), (j*self.size_x,self.height)) for j in range(self.grid.dimensions[1])]
         pg.display.update()
+
+    def update_grid_from_diff(self, diff):
+        nx = grid.dimensions[1]
+
+        for index in diff:
+            i, j = index // nx, index % nx
+
+            grid.cells[i, j] = 0 if grid.cells[i, j] == 1 else 1
 
 
 if __name__ == '__main__':
@@ -193,17 +219,32 @@ if __name__ == '__main__':
 
     while True:
         #time.sleep(0.5) # A régler ou commenter pour vitesse maxi
+        diff = []
         if color == 1:
             t1 = time.time()
             diff = grid.compute_next_iteration()
             t2 = time.time()
 
+            diff_total = comm_calcules.Allgather(diff)
+            # diff_final = []
+            # for x in diff:
+            #     for y in diff:
+            #         if y not in diff_total and y not in diff_final:
+            #             diff_final.append(y)
+            # diff = diff_final
+            diff = diff_total
+
         if color == 0:
-            appli.draw()
             t3 = time.time()
+            appli.update_grid_from_diff(diff)
+            appli.draw()
+            t4 = time.time()
+        else:
+            grid.update_grid_from_diff(diff)
+            comm_calcules.barrier()
 
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
-        print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='');
+        #print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='');
